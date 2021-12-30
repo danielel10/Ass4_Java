@@ -1,5 +1,6 @@
 package bgu.spl.net.impl.echo;
 
+import java.util.Scanner;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -12,7 +13,8 @@ public class EchoClient {
     public static void main(String[] args) throws IOException {
 
         if (args.length == 0) {
-            args = new String[]{"localhost", "hello"};
+            Scanner myObj = new Scanner(System.in);
+            args = new String[]{"localhost", myObj.nextLine()};
         }
 
         if (args.length < 2) {
