@@ -1,5 +1,7 @@
 package bgu.spl.net.impl.Assin;
 
+import bgu.spl.net.impl.Assin.Messages.RegisterMessage;
+
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
@@ -12,9 +14,11 @@ public class ClientDetails {
     private String birthday;
     LinkedList<String> Following;
     LinkedList<String> Followers;
-    LinkedList<MessageswaitingToBesent> messages;
+    LinkedList<RegisterMessage> messages;
     private int numOfPosts;
     private int age;
+    boolean isregistered;
+    boolean islogedin;
 
 
     public ClientDetails(String username, String password, String birthday) {
@@ -59,7 +63,7 @@ public class ClientDetails {
         return age;
     }
 
-    public LinkedList<MessageswaitingToBesent> getMessages() {
+    public LinkedList<RegisterMessage> getMessages() {
         return messages;
     }
 
@@ -75,7 +79,22 @@ public class ClientDetails {
         Followers.add(username);
     }
 
-    public void addMessageTobeSent(MessageswaitingToBesent messageswaitingToBesent) {
-        messages.add(messageswaitingToBesent);
+    public void addMessageTobeSent(RegisterMessage registerMessage) {
+        this.messages.add(registerMessage);
+    }
+    public boolean isIsregister(){
+       return isregistered;
+    }
+
+    public boolean isIsloged(){
+        return islogedin;
+    }
+
+    public void setIsregistered(boolean isregistered) {
+        this.isregistered = isregistered;
+    }
+
+    public void setIslogedin(boolean islogedin) {
+        this.islogedin = islogedin;
     }
 }

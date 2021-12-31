@@ -4,14 +4,15 @@ import bgu.spl.net.api.bidi.ConnectionHandler;
 
 import java.io.IOException;
 
-public class connectionHandler implements ConnectionHandler {
+public class connectionHandler<T> implements ConnectionHandler<T> {
+
     @Override
-    public void send(Object msg) {
+    public void close() throws IOException {
 
     }
 
     @Override
-    public void close() throws IOException {
+    public void send(T msg) {
 
     }
 }
