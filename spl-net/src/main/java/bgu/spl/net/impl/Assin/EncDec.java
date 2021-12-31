@@ -1,29 +1,23 @@
-package bgu.spl.net.impl.echo;
+package bgu.spl.net.impl.Assin;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
+
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class LineMessageEncoderDecoder implements MessageEncoderDecoder<String> {
+public class EncDec implements MessageEncoderDecoder {
 
     private byte[] bytes = new byte[1 << 10]; //start with 1k
     private int len = 0;
 
     @Override
-    public String decodeNextByte(byte nextByte) {
-        //notice that the top 128 ascii characters have the same representation as their utf-8 counterparts
-        //this allow us to do the following comparison
-        if (nextByte == '0') {
+    public Object decodeNextByte(byte nextByte) {
+        if (nextByte == ';') {
             return popString();
         }
 
         pushByte(nextByte);
-        return null; //not a line yet
-    }
-
-    @Override
-    public byte[] encode(String message) {
-        return (message + "\n").getBytes(); //uses utf8 by default
+        return null;
     }
 
     private void pushByte(byte nextByte) {
@@ -40,5 +34,10 @@ public class LineMessageEncoderDecoder implements MessageEncoderDecoder<String> 
         String result = new String(bytes, 0, len, StandardCharsets.UTF_8);
         len = 0;
         return result;
+    }
+
+    @Override
+    public byte[] encode(Object message) {
+        return new byte[0];
     }
 }
