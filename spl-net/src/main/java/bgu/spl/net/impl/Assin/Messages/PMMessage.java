@@ -1,6 +1,8 @@
 package bgu.spl.net.impl.Assin.Messages;
 
-public class PMMessage {
+import bgu.spl.net.api.bidi.Messages;
+
+public class PMMessage implements Messages {
 
     private short opcode;
     private String username;

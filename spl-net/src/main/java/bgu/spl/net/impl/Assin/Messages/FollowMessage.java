@@ -1,6 +1,8 @@
 package bgu.spl.net.impl.Assin.Messages;
 
-public class FollowMessage {
+import bgu.spl.net.api.bidi.Messages;
+
+public class FollowMessage implements Messages {
 
     private short opcode;
     private short follow; //0 for follow, 1 for unfollow

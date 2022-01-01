@@ -1,6 +1,8 @@
 package bgu.spl.net.impl.Assin.Messages;
 
-public class PostMessage {
+import bgu.spl.net.api.bidi.Messages;
+
+public class PostMessage implements Messages {
 
     private short opcode;
     private String content;

@@ -1,6 +1,8 @@
 package bgu.spl.net.impl.Assin.Messages;
 
-public class ErrorMessage {
+import bgu.spl.net.api.bidi.Messages;
+
+public class ErrorMessage implements Messages {
 
     private short opcode;
     private short messageOpcode;

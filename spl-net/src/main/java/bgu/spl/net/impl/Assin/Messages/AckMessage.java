@@ -1,6 +1,8 @@
 package bgu.spl.net.impl.Assin.Messages;
 
-public class AckMessage {
+import bgu.spl.net.api.bidi.Messages;
+
+public class AckMessage implements Messages {
 
     private short opcode;
     private short messageOpcode;
@@ -15,19 +17,12 @@ public class AckMessage {
         this.messageOpcode = messageOpcode;
         this.username = username;
         this.age = age;
-        this.numOfPosts = numOfPosts
-public class BlockMessage {
-
-    private short opcode;
-    private String username;
-
-    public BlockMessage(short opcode, String username) {
-        this.opcode = opcode;
-        this.username = username;;
+        this.numOfPosts = numOfPosts;
         this.numOfFollowers = numOfFollowers;
         this.numOfFollowing = numOfFollowing;
     }
 
+    @Override
     public short getOpcode() {
         return opcode;
     }

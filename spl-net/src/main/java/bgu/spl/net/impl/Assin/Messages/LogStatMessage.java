@@ -1,6 +1,8 @@
 package bgu.spl.net.impl.Assin.Messages;
 
-public class LogStatMessage {
+import bgu.spl.net.api.bidi.Messages;
+
+public class LogStatMessage implements Messages {
 
     private short opcode;
 

@@ -1,6 +1,8 @@
 package bgu.spl.net.impl.Assin.Messages;
 
-public class StatMessage {
+import bgu.spl.net.api.bidi.Messages;
+
+public class StatMessage implements Messages {
 
     private short opcode;
     private String ListOfUsernames;

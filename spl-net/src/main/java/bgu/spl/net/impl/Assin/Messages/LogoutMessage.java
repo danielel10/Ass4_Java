@@ -1,6 +1,8 @@
 package bgu.spl.net.impl.Assin.Messages;
 
-public class LogoutMessage {
+import bgu.spl.net.api.bidi.Messages;
+
+public class LogoutMessage implements Messages {
 
     private short opcode;
 

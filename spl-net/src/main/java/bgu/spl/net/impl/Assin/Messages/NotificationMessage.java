@@ -1,6 +1,8 @@
 package bgu.spl.net.impl.Assin.Messages;
 
-public class NotificationMessage {
+import bgu.spl.net.api.bidi.Messages;
+
+public class NotificationMessage implements Messages {
 
     private short opcode;
     private short type; // PM or POST message
