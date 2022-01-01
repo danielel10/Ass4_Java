@@ -1,0 +1,32 @@
+package bgu.spl.net.impl.Assin.Messages;
+
+public class LoginMessage {
+
+    private short opcode;
+    private String username;
+    private String Password;
+    private short Captcha;
+
+    public LoginMessage(short opcode, String username, String password, short captcha) {
+        this.opcode = opcode;
+        this.username = username;
+        Password = password;
+        Captcha = captcha;
+    }
+
+    public short getOpcode() {
+        return opcode;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return Password;
+    }
+
+    public short getCaptcha() {
+        return Captcha;
+    }
+}
