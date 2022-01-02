@@ -29,6 +29,8 @@ public class ClientDetails {
         Following = new LinkedList<>();
         Followers = new LinkedList<>();
         messages = new LinkedList<>();
+        islogedin = false;
+        isregistered = false;
     }
 
     public String getUsername() {

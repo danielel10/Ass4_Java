@@ -2,8 +2,7 @@ package bgu.spl.net.impl.Assin;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.api.bidi.Messages;
-import bgu.spl.net.impl.Assin.Messages.BlockMessage;
-import bgu.spl.net.impl.Assin.Messages.RegisterMessage;
+import bgu.spl.net.impl.Assin.Messages.*;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -30,22 +29,71 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
     public Messages decodeNextByte(byte nextByte) {
         if (nextByte == ';') {
             short opcode = pooOpcode();
-            msg.add(popString());
-            String strmsg = popString();
             switch (opcode) {
                 case 1: {
-                    String username = strmsg.substring(2, strmsg.indexOf('0'));
-                    strmsg = strmsg.substring(strmsg.indexOf('0') + 1);
-                    String password = strmsg.substring(0, strmsg.indexOf('-') - 3);
-                    strmsg = strmsg.substring(strmsg.indexOf('0') + 1);
-                    String birthday = strmsg.substring(0, strmsg.indexOf(';'));
-                    RegisterMessage registerMessage = new RegisterMessage((short) 1, username, password, birthday);
+                    String username = msg.removeFirst();
+                    String password = msg.removeFirst();
+                    String birthday = msg.removeFirst();
+                    RegisterMessage registerMessage = new RegisterMessage(opcode, username, password, birthday);
                     msg.clear();
                     return registerMessage;
 
                 }
+                case 2: {
+                    String username = msg.removeFirst();
+                    String password = msg.removeFirst();
+                    String captcha = msg.removeFirst();
+                    byte[] test = captcha.getBytes();
+                    short captchas;
+                    if (test[1] == 49) {
+                        captchas = 1;
+                    }
+                    else
+                        captchas = 0;
+                    msg.clear();
+                    return new LoginMessage(opcode,username,password,captchas);
+
+                }
+                case 3: {
+                    msg.clear();
+                    return new LogoutMessage(opcode);
+                }
+                case 4: {
+                    String followUnfollow = msg.removeFirst();
+                    String username = msg.removeFirst();
+                    byte[] test = followUnfollow.getBytes();
+                    short followUnfollows;
+                    if (test[0] == 49) {
+                        followUnfollows = 1;
+                    }
+                    else
+                        followUnfollows = 0;
+                    msg.clear();
+                    return new FollowMessage(opcode,followUnfollows,username);
+                }
+                case 5 : {
+                    String content = msg.removeFirst();
+                    msg.clear();
+                    return new PostMessage(opcode,content);
+                }
+                case 6 : {
+                    String username = msg.removeFirst();
+                    String content = msg.removeFirst();
+                    String Sending_Date_And_Time = msg.removeFirst();
+                    msg.clear();
+                    return new PMMessage(opcode,username,content,Sending_Date_And_Time);
+                }
+                case 7 : {
+                    msg.clear();
+                    return new LogStatMessage(opcode);
+                }
+                case 8 : {
+                    String usernamelist = msg.removeFirst();
+                    msg.clear();
+                    return new StatMessage(opcode,usernamelist.split("|"));
+                }
                 case 12: {
-                    String username = strmsg.substring(2, strmsg.length() - 1);
+                    String username = msg.removeFirst();
                     BlockMessage blockMessage = new BlockMessage(opcode, username);
                     msg.clear();
                     return blockMessage;
