@@ -98,7 +98,7 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
                 case 8: {
                     String usernamelist = msg.removeFirst();
                     msg.clear();
-                    return new StatMessage(opcode, usernamelist.split("|"));
+                    return new StatMessage(opcode, usernamelist.split("\\|"));
                 }
                 case 12: {
                     String username = msg.removeFirst();
