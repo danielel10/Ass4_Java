@@ -47,11 +47,10 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
                     short captchas;
                     if (test[1] == 49) {
                         captchas = 1;
-                    }
-                    else
+                    } else
                         captchas = 0;
                     msg.clear();
-                    return new LoginMessage(opcode,username,password,captchas);
+                    return new LoginMessage(opcode, username, password, captchas);
 
                 }
                 case 3: {
@@ -65,32 +64,41 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
                     short followUnfollows;
                     if (test[0] == 49) {
                         followUnfollows = 1;
-                    }
-                    else
+                    } else
                         followUnfollows = 0;
                     msg.clear();
-                    return new FollowMessage(opcode,followUnfollows,username);
+                    return new FollowMessage(opcode, followUnfollows, username);
                 }
-                case 5 : {
+                case 5: {
                     String content = msg.removeFirst();
+                    LinkedList<String> users = new LinkedList<>();
+
+                    while (!msg.getFirst().equals("0")) {
+                        String str = msg.removeFirst();
+                        System.out.println(str);
+                        if (str.charAt(0) == '@') {
+                            users.add(str.substring(1));
+                        }
+                        content = content + " " + str;
+                    }
                     msg.clear();
-                    return new PostMessage(opcode,content);
+                    return new PostMessage(opcode, content, users);
                 }
-                case 6 : {
+                case 6: {
                     String username = msg.removeFirst();
                     String content = msg.removeFirst();
                     String Sending_Date_And_Time = msg.removeFirst();
                     msg.clear();
-                    return new PMMessage(opcode,username,content,Sending_Date_And_Time);
+                    return new PMMessage(opcode, username, content, Sending_Date_And_Time);
                 }
-                case 7 : {
+                case 7: {
                     msg.clear();
                     return new LogStatMessage(opcode);
                 }
-                case 8 : {
+                case 8: {
                     String usernamelist = msg.removeFirst();
                     msg.clear();
-                    return new StatMessage(opcode,usernamelist.split("|"));
+                    return new StatMessage(opcode, usernamelist.split("|"));
                 }
                 case 12: {
                     String username = msg.removeFirst();
@@ -100,8 +108,8 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
                 }
             }
         }
-        if(nextByte == 0) {
-            if(count > 1) {
+        if (nextByte == 0) {
+            if (count > 1) {
                 String word = popString();
                 msg.add(word);
             }
@@ -118,16 +126,18 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
     }
 
     private void pushByte(byte nextByte) {
-        if(count < 2) {
+        if (count < 2) {
             opbyte[count++] = nextByte;
-        }
-        else {
-            if (len >= bytes.length) {
-                bytes = Arrays.copyOf(bytes, len * 2);
-            }
+        } else {
+            if (nextByte != 0) {
+                if (len >= bytes.length) {
+                    bytes = Arrays.copyOf(bytes, len * 2);
+                }
 
-            bytes[len++] = nextByte;
+                bytes[len++] = nextByte;
+            }
         }
+
     }
 
     private String popString() {

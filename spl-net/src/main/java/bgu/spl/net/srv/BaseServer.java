@@ -4,6 +4,7 @@ import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.api.MessagingProtocol;
 import bgu.spl.net.api.bidi.BidiMessagingProtocol;
 import bgu.spl.net.api.bidi.Connections;
+import bgu.spl.net.impl.Assin.ClientDetails;
 import bgu.spl.net.impl.Assin.Database;
 import bgu.spl.net.impl.Assin.connections;
 import bgu.spl.net.impl.Assin.connectionHandler;
@@ -40,15 +41,17 @@ public abstract class BaseServer<T> implements Server<T> {
             this.sock = serverSock; //just to be able to close
             int clientid = 0;
             while (!Thread.currentThread().isInterrupted()) {
-
+                Database database= Database.getInstance();
                 Socket clientSock = serverSock.accept();
-                Connections<T> connection = connections.getInstance(Database.getInstance());
+                Connections<T> connection = connections.getInstance(database);
 
                 connectionHandler<T> handler = new connectionHandler<T>(protocolFactory.get(),encdecFactory.get(),clientSock,connection,clientid);
                 //create new <clientid,clientdetails with the new id> to db
                 //create new <clientdetails,Handler> to db.
                 //create new handler with connections and id, then in handler we start the bidiprotocol
-
+                ClientDetails clientDetails = new ClientDetails(clientid);
+                database.getClientsIds().put(clientid,clientDetails);
+                database.getClientsHandlers().put(clientDetails,handler);
                 execute(handler);
                 clientid++;
             }

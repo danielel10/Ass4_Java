@@ -16,6 +16,7 @@ public class ClientDetails {
     private String birthday;
     LinkedList<String> Following;
     LinkedList<String> Followers;
+    LinkedList<String> blockedUsers;
     LinkedList<Messages> messages;
     private int numOfPosts;
     private int age;
@@ -29,8 +30,33 @@ public class ClientDetails {
         Following = new LinkedList<>();
         Followers = new LinkedList<>();
         messages = new LinkedList<>();
+        blockedUsers = new LinkedList<>();
         islogedin = false;
         isregistered = false;
+    }
+
+    public void addBlockedUser (String username) {
+        blockedUsers.add(username);
+    }
+
+    public LinkedList<String> getBlockedUsers() {
+        return blockedUsers;
+    }
+
+    public void setFollowing(LinkedList<String> following) {
+        Following = following;
+    }
+
+    public void setFollowers(LinkedList<String> followers) {
+        Followers = followers;
+    }
+
+    public void setBlockedUsers(LinkedList<String> blockedUsers) {
+        this.blockedUsers = blockedUsers;
+    }
+
+    public void setMessages(LinkedList<Messages> messages) {
+        this.messages = messages;
     }
 
     public String getUsername() {

@@ -5,6 +5,10 @@ import bgu.spl.net.api.bidi.Connections;
 import bgu.spl.net.api.bidi.Messages;
 import bgu.spl.net.impl.Assin.Messages.*;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
+
 public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
 
     private boolean shouldterminate;
@@ -37,6 +41,9 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
                 break;
             }
             case 4: {
+                follow((FollowMessage) message,clientid);
+            }
+            case 5 : {
 
             }
 
@@ -69,16 +76,18 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
                 if (database.isLogedin(message.getUsername(), clientid)) {
                     connections.send(clientid, new ErrorMessage((short) 11, (short) 1));
                 } else {
-                    ClientDetails tmpclient = database.getUsernames().get(message.getUsername());
-                    ClientDetails clientDetails = database.getClientsIds().get(clientid);
-                    database.getClientsIds().get(clientid).setUsername(message.getUsername());
-                    database.getClientsIds().get(clientid).setBirthday(message.getBirthday());
-                    database.getClientsIds().get(clientid).setPassword(message.getPassword());
-                    database.getClientsIds().get(clientid).setIsregistered(true);
-                    while (!tmpclient.getMessages().isEmpty())
-                        clientDetails.addMessageTobeSent(tmpclient.getMessages().removeFirst());
+                    ClientDetails oldclient = database.getUsernames().get(message.getUsername());
+                    ClientDetails newclientDetails = database.getClientsIds().get(clientid);
+                    newclientDetails.setUsername(message.getUsername());
+                    newclientDetails.setBirthday(message.getBirthday());
+                    newclientDetails.setPassword(message.getPassword());
+                    newclientDetails.setIsregistered(true);
+                    newclientDetails.setBlockedUsers(oldclient.getBlockedUsers());
+                    newclientDetails.setFollowers(oldclient.getFollowers());
+                    newclientDetails.setFollowing(oldclient.getFollowing());
+                    newclientDetails.setMessages(oldclient.getMessages());
                     database.getUsernames().remove(message.getUsername());
-                    database.getUsernames().put(message.getUsername(), clientDetails);
+                    database.getUsernames().put(message.getUsername(), newclientDetails);
                     AckMessage ackMessage = new AckMessage((short) 10, (short) 1, null, (short) 0, (short) 0, (short) 0, (short) 0);
                     connections.send(clientid, ackMessage);
                 }
@@ -90,8 +99,15 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
         if (database.isregister(clientid)) {
             if (!database.isLogedin(loginMessage.getUsername(), clientid)) {
                 if (database.getClientsIds().get(clientid).getPassword().equals(loginMessage.getPassword())) {
-                    AckMessage ackMessage = new AckMessage((short) 10, (short) 2, null, (short) 0, (short) 0, (short) 0, (short) 0);
-                    connections.send(clientid, ackMessage);
+                    if(loginMessage.getCaptcha() == 1) {
+                        database.getClientsIds().get(clientid).setIslogedin(true);
+                        AckMessage ackMessage = new AckMessage((short) 10, (short) 2, null, (short) 0, (short) 0, (short) 0, (short) 0);
+                        connections.send(clientid, ackMessage);
+                    }
+                    else {
+                        connections.send(clientid, new ErrorMessage((short) 11, (short) 2));
+                    }
+
                 } else
                     connections.send(clientid, new ErrorMessage((short) 11, (short) 2));
             } else
@@ -104,12 +120,121 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
     public void Logout(LogoutMessage logoutMessage, int clientid) {
         if (database.isregister(clientid)) {
             if (database.isLogedin(null, clientid)) {
+                database.getClientsIds().get(clientid).setIslogedin(false);
+                database.getClientsIds().get(clientid).setIsregistered(false);
                 AckMessage ackMessage = new AckMessage((short) 10, (short) 3, null, (short) 0, (short) 0, (short) 0, (short) 0);
                 connections.send(clientid, ackMessage);
             } else
                 connections.send(clientid, new ErrorMessage((short) 11, (short) 3));
         } else
             connections.send(clientid, new ErrorMessage((short) 11, (short) 3));
+
+    }
+
+    public void follow(FollowMessage followMessage, int clienid) {
+        if(database.isregister(clienid)) {
+            if(database.isLogedin(null,clientid)){
+                //follow case
+                if(followMessage.getFollow() == 0) {
+                    if(database.getClientsIds().get(clientid).getFollowing().contains(followMessage.getUsername()) |
+                    database.getClientsIds().get(clientid).getBlockedUsers().contains(followMessage.getUsername()) |
+                    database.getUsernames().get(followMessage.getUsername()).getBlockedUsers().contains(database.getClientsIds().get(clientid).getUsername()))
+                        connections.send(clientid, new ErrorMessage((short) 11, (short) 4));
+                    else {
+                        database.getClientsIds().get(clientid).getFollowing().add(followMessage.getUsername());
+                        database.getUsernames().get(followMessage.getUsername()).getFollowers().add(database.getClientsIds().get(clientid).getUsername())
+                        AckMessage ackMessage = new AckMessage((short) 10, (short) 4, followMessage.getUsername(), (short) 0, (short) 0, (short) 0, (short) 0);
+                        connections.send(clientid, ackMessage);
+                    }
+
+
+                }
+                else {
+                    if(database.getClientsIds().get(clientid).getFollowing().contains(followMessage.getUsername())) {
+                        database.getClientsIds().get(clientid).getFollowing().remove(followMessage.getUsername());
+                        AckMessage ackMessage = new AckMessage((short) 10, (short) 4, followMessage.getUsername(), (short) 1, (short) 0, (short) 0, (short) 0);
+                        connections.send(clientid, ackMessage);
+                    }
+                    else
+                        connections.send(clientid, new ErrorMessage((short) 11, (short) 4));
+                }
+            }
+            else
+                connections.send(clientid, new ErrorMessage((short) 11, (short) 4));
+        }
+        else
+            connections.send(clientid, new ErrorMessage((short) 11, (short) 4));
+    }
+
+    public void post(PostMessage message, int clientid) {
+        if(database.isregister(clientid)) {
+            if (database.isLogedin(null,clientid)) {
+                LinkedList<String> followers = database.getClientsIds().get(clientid).getFollowers();
+                database.getClientsIds().get(clientid).addPost();
+                while (!followers.isEmpty()) {
+                    NotificationMessage notificationMessage = new NotificationMessage((short) 9,(short) 1,database.getClientsIds().get(clientid).getUsername(),message.getContent());
+                    ClientDetails clientDetails = database.getUsernames().get(followers.removeFirst());
+                    connections.send(clientDetails.getClientId(),notificationMessage);
+                }
+                while (!message.getOtherusers().isEmpty()) {
+                    NotificationMessage notificationMessage = new NotificationMessage((short) 9,(short) 1,database.getClientsIds().get(clientid).getUsername(),message.getContent());
+                    ClientDetails clientDetails = database.getUsernames().get(message.getOtherusers().removeFirst());
+                    connections.send(clientDetails.getClientId(),notificationMessage);
+                }
+                AckMessage ackMessage = new AckMessage((short) 10, (short) 5, null, (short) 0, (short) 0, (short) 0, (short) 0);
+                connections.send(clientid, ackMessage);
+            }
+            else {
+                connections.send(clientid, new ErrorMessage((short) 11, (short) 5));
+
+            }
+        }
+        else
+            connections.send(clientid, new ErrorMessage((short) 11, (short) 5));
+    }
+
+    public void PM(PMMessage pmMessage, int clientid) {
+        if(!database.isregister(clientid) | !database.isLogedin(null,clientid) |
+        !database.isregister(database.getUsernames().get(pmMessage.getUsername()).getClientId()) |
+        !database.getClientsIds().get(clientid).getFollowing().contains(pmMessage.getUsername())) {
+            connections.send(clientid, new ErrorMessage((short) 11, (short) 6));
+        }
+        else {
+            String content = pmMessage.getContent();
+            Iterator<String> it = database.getFilterdWords().iterator();
+            while (it.hasNext()) {
+                content = content.replaceAll(it.next(),"<filtered>");
+            }
+            NotificationMessage notificationMessage = new NotificationMessage((short) 9,(short) 0,database.getClientsIds().get(clientid).getUsername(),content);
+            connections.send(database.getUsernames().get(pmMessage.getUsername()).getClientId(),notificationMessage);
+            AckMessage ackMessage = new AckMessage((short) 10, (short) 6, null, (short) 0, (short) 0, (short) 0, (short) 0);
+            connections.send(clientid, ackMessage);
+
+        }
+    }
+
+    public void logStat(LogStatMessage logStatMessage, int clientid) {
+        if (!database.isregister(clientid) | !database.isLogedin(null,clientid)) {
+            connections.send(clientid, new ErrorMessage((short) 11, (short) 7));
+        }
+        else {
+            LinkedList<ClientDetails> logedInclients = new LinkedList<>();
+            for (Map.Entry<String,ClientDetails> entry : database.getUsernames().entrySet()) {
+                ClientDetails clientDetails = entry.getValue();
+                if (clientDetails.islogedin) {
+                    logedInclients.add(clientDetails);
+                }
+            }
+            while (!logedInclients.isEmpty()) {
+                ClientDetails clientDetails = logedInclients.removeFirst();
+                AckMessage ackMessage = new AckMessage((short) 10, (short) 7, null, (short) clientDetails.getAge(), (short) clientDetails.getNumOfPosts(), (short) clientDetails.getFollowers().size(), (short) clientDetails.getFollowing().size());
+                connections.send(clientid, ackMessage);
+            }
+        }
+
+    }
+
+    public void StatMessage(StatMessage statMessage,int clientid) {
 
     }
 
