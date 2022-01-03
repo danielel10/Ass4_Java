@@ -37,7 +37,7 @@ public class Database {
     }
 
     public boolean isregister( int clientId) {
-        return ClientsIds.containsKey(clientId);
+        return ClientsIds.get(clientId).isregistered;
     }
 
     public boolean isUsernameAvilable(String username,int clientid){

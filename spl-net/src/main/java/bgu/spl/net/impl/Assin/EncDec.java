@@ -45,7 +45,7 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
                     String captcha = msg.removeFirst();
                     byte[] test = captcha.getBytes();
                     short captchas;
-                    if (test[1] == 49) {
+                    if (test[0] == 49) {
                         captchas = 1;
                     } else
                         captchas = 0;
@@ -122,7 +122,26 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
 
     @Override
     public byte[] encode(Messages message) {
-        return (message + "\n").getBytes(); //uses utf8 by default
+        short opcode = message.getOpcode();
+        switch (opcode) {
+            case 9: {
+                byte[] opbyte = new byte[1 << 10];
+                opbyte[0] = (byte)((opcode >> 8) & 0xFF);
+                opbyte[1] = (byte)(opcode & 0xFF);
+                byte[] content = NotificationMsg((NotificationMessage) message); //uses utf8 by default
+                byte[] result = new byte[opbyte.length + content.length];
+                System.arraycopy(opbyte,0,result,0,opbyte.length);
+                System.arraycopy(content,0,result,opbyte.length,content.length);
+                return result;
+
+            }
+            case 10: {
+                return (ACKMsg((AckMessage) message) ); //uses utf8 by default
+            }
+            case 11:
+                return (ErrorMsg((ErrorMessage) message)); //uses utf8 by default
+        }
+        return null;
     }
 
     private void pushByte(byte nextByte) {
@@ -154,5 +173,75 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
         count = 0;
         return opcode;
 
+    }
+
+    private byte[] NotificationMsg(NotificationMessage notificationMessage) {
+        byte[] bytesArr = new byte[1];
+        bytesArr[0] = (byte)(notificationMessage.getType() & 0xFF);
+        String content = notificationMessage.getPostingUser() + "\0";
+        content = content + notificationMessage.getContent() + "\0" + ";";
+        byte[] result = new byte[bytesArr.length + content.getBytes().length];
+        System.arraycopy(bytesArr,0,result,0,bytesArr.length);
+        System.arraycopy(content.getBytes(),0,result,bytesArr.length,content.getBytes().length);
+        return result;
+    }
+
+    private byte[] ACKMsg(AckMessage ackMessage) {
+        short opcpde = 10;
+        short msgOpcode = ackMessage.getMessageOpcode();
+
+        if (msgOpcode == 4) {
+            byte[] opcodeAndMsgOpcode = new byte[4];
+            opcodeAndMsgOpcode[0] = (byte)((opcpde >> 8) & 0xFF);
+            opcodeAndMsgOpcode[1] = (byte)(opcpde & 0xFF);
+            opcodeAndMsgOpcode[2] = (byte)((msgOpcode >> 8) & 0xFF);
+            opcodeAndMsgOpcode[3] = (byte)(msgOpcode & 0xFF);
+            String content;
+            content = ackMessage.getUsername() + "\0" + ";";
+            byte[] contentbyte = content.getBytes();
+            byte[] result = new byte[4 + contentbyte.length];
+            System.arraycopy(opcodeAndMsgOpcode,0,result,0,4);
+            System.arraycopy(contentbyte,0,result,4,contentbyte.length);
+            return result;
+        }
+        else if (msgOpcode == 7 | msgOpcode == 8) {
+            byte[] ackmsgbyte = new byte[13];
+            ackmsgbyte[0] = (byte)((opcpde >> 8) & 0xFF);
+            ackmsgbyte[1] = (byte)(opcpde & 0xFF);
+            ackmsgbyte[2] = (byte)((msgOpcode >> 8) & 0xFF);
+            ackmsgbyte[3] = (byte)(msgOpcode & 0xFF);
+            ackmsgbyte[4] = (byte)((ackMessage.getAge() >> 8) & 0xFF);
+            ackmsgbyte[5] = (byte)(ackMessage.getAge() & 0xFF);
+            ackmsgbyte[6] = (byte)((ackMessage.getNumOfPosts() >> 8) & 0xFF);
+            ackmsgbyte[7] = (byte)(ackMessage.getNumOfPosts() & 0xFF);
+            ackmsgbyte[8] = (byte)((ackMessage.getNumOfFollowers() >> 8) & 0xFF);
+            ackmsgbyte[9] = (byte)(ackMessage.getNumOfFollowers() & 0xFF);
+            ackmsgbyte[10] = (byte)((ackMessage.getNumOfFollowing() >> 8) & 0xFF);
+            ackmsgbyte[11] = (byte)(ackMessage.getNumOfFollowing() & 0xFF);
+            ackmsgbyte[12] = ';';
+            return ackmsgbyte;
+        }
+        else {
+            byte[] ackmsgbyte = new byte[5];
+            ackmsgbyte[0] = (byte)((opcpde >> 8) & 0xFF);
+            ackmsgbyte[1] = (byte)(opcpde & 0xFF);
+            ackmsgbyte[2] = (byte)((msgOpcode >> 8) & 0xFF);
+            ackmsgbyte[3] = (byte)(msgOpcode & 0xFF);
+            ackmsgbyte[4] = ';';
+            return ackmsgbyte;
+
+        }
+    }
+
+    private byte[] ErrorMsg(ErrorMessage errorMessage) {
+        short opcpde = 11;
+        short msgOpcode = errorMessage.getMessageOpcode();
+        byte[] error = new byte[5];
+        error[0] = (byte)((opcpde >> 8) & 0xFF);
+        error[1] = (byte)(opcpde & 0xFF);
+        error[2] = (byte)((msgOpcode >> 8) & 0xFF);
+        error[3] = (byte)(msgOpcode & 0xFF);
+        error[4] = ';';
+        return error;
     }
 }

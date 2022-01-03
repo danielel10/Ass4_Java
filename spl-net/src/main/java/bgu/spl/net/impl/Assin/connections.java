@@ -11,7 +11,7 @@ public class connections<T> implements Connections<T> {
 
     private connections(Database database) {
 
-        database = Database.getInstance();
+        this.database = database;
     }
 
     public static synchronized connections getInstance(Database database) {

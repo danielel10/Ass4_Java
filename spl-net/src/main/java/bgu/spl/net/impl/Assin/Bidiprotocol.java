@@ -42,21 +42,27 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
             }
             case 4: {
                 follow((FollowMessage) message, clientid);
+                break;
             }
             case 5: {
                 post((PostMessage) message,clientid);
+                break;
             }
             case 6: {
                 PM((PMMessage) message,clientid);
+                break;
             }
             case 7 : {
                 logStat((LogStatMessage) message,clientid);
+                break;
             }
             case 8 : {
                 stat((StatMessage) message,clientid);
+                break;
             }
             case 12 : {
                 Block((BlockMessage) message,clientid);
+                break;
             }
 
         }
