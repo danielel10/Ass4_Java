@@ -155,6 +155,7 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
                 if (followMessage.getFollow() == 0) {
                     if (database.getClientsIds().get(clientid).getFollowing().contains(followMessage.getUsername()) |
                             database.getClientsIds().get(clientid).getBlockedUsers().contains(followMessage.getUsername()) |
+                            !database.getUsernames().containsKey(followMessage.getUsername()) ||
                             database.getUsernames().get(followMessage.getUsername()).getBlockedUsers().contains(database.getClientsIds().get(clientid).getUsername()))
                         connections.send(clientid, new ErrorMessage((short) 11, (short) 4));
                     else {
@@ -191,7 +192,7 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
                 }
                 while (!message.getOtherusers().isEmpty()) {
                     String usertosend = message.getOtherusers().removeFirst();
-                    if (!database.getUsernames().get(usertosend).getBlockedUsers().contains(database.getClientsIds().get(clientid).getUsername())) {
+                    if (database.getUsernames().containsKey(usertosend)&&!database.getUsernames().get(usertosend).getBlockedUsers().contains(database.getClientsIds().get(clientid).getUsername())) {
                         NotificationMessage notificationMessage = new NotificationMessage((short) 9, (short) 1, database.getClientsIds().get(clientid).getUsername(), message.getContent());
                         ClientDetails clientDetails = database.getUsernames().get(usertosend);
                         connections.send(clientDetails.getClientId(), notificationMessage);
@@ -209,11 +210,12 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
 
     public void PM(PMMessage pmMessage, int clientid) {
         if (!database.isregister(clientid) | !database.isLogedin(null, clientid) |
+                !database.getUsernames().containsKey(pmMessage.getUsername()) ||
                 !database.isregister(database.getUsernames().get(pmMessage.getUsername()).getClientId()) |
                 !database.getClientsIds().get(clientid).getFollowing().contains(pmMessage.getUsername())) {
             connections.send(clientid, new ErrorMessage((short) 11, (short) 6));
         } else {
-            if (!database.getUsernames().get(pmMessage.getUsername()).getBlockedUsers().contains(database.getClientsIds().get(clientid).getUsername())) {
+            if (database.getUsernames().containsKey(pmMessage.getUsername()) && !database.getUsernames().get(pmMessage.getUsername()).getBlockedUsers().contains(database.getClientsIds().get(clientid).getUsername())) {
                 String content = pmMessage.getContent();
                 Iterator<String> it = database.getFilterdWords().iterator();
                 while (it.hasNext()) {
@@ -254,10 +256,15 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
             connections.send(clientid, new ErrorMessage((short) 11, (short) 8));
         } else {
             for (int i = 0; i < statMessage.getListOfUsernames().length; i++) {
-                ClientDetails clientDetails = database.getUsernames().get(statMessage.getListOfUsernames()[i]);
-                if (!database.getUsernames().get(clientDetails.getUsername()).getBlockedUsers().contains(database.getClientsIds().get(clientid).getUsername())) {
-                    AckMessage ackMessage = new AckMessage((short) 10, (short) 8, null, (short) clientDetails.getAge(), (short) clientDetails.getNumOfPosts(), (short) clientDetails.getFollowers().size(), (short) clientDetails.getFollowing().size());
-                    connections.send(clientid, ackMessage);
+                if(database.getUsernames().containsKey(statMessage.getListOfUsernames()[i])) {
+                    ClientDetails clientDetails = database.getUsernames().get(statMessage.getListOfUsernames()[i]);
+                    if (!database.getUsernames().get(clientDetails.getUsername()).getBlockedUsers().contains(database.getClientsIds().get(clientid).getUsername())) {
+                        AckMessage ackMessage = new AckMessage((short) 10, (short) 8, null, (short) clientDetails.getAge(), (short) clientDetails.getNumOfPosts(), (short) clientDetails.getFollowers().size(), (short) clientDetails.getFollowing().size());
+                        connections.send(clientid, ackMessage);
+                    }
+                }
+                else {
+                    connections.send(clientid, new ErrorMessage((short) 11, (short) 8));
                 }
             }
         }
@@ -265,6 +272,7 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
 
     public void Block(BlockMessage blockMessage, int clientid) {
         if (!database.isregister(clientid) | !database.isLogedin(null, clientid) |
+                !database.getUsernames().containsKey(blockMessage.getUsername()) ||
                 !database.isregister(database.getUsernames().get(blockMessage.getUsername()).getClientId()) |
                 database.getClientsIds().get(clientid).getBlockedUsers().contains(blockMessage.getUsername())) {
             connections.send(clientid, new ErrorMessage((short) 11, (short) 12));
