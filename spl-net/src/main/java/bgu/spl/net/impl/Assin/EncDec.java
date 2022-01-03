@@ -130,8 +130,11 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
                 opbyte[1] = (byte)(opcode & 0xFF);
                 byte[] content = NotificationMsg((NotificationMessage) message); //uses utf8 by default
                 byte[] result = new byte[opbyte.length + content.length];
-                System.arraycopy(opbyte,0,result,0,opbyte.length);
-                System.arraycopy(content,0,result,opbyte.length,content.length);
+                result[0] = opbyte[0];
+                result[1] = opbyte[1];
+                for (int i = 2; i < content.length + 2; i++ ) {
+                    result[i] = content[i - 2];
+                }
                 return result;
 
             }
