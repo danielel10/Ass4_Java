@@ -119,13 +119,19 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
     }
 
     public void Login(LoginMessage loginMessage, int clientid) {
-        if (database.isregister(clientid)) {
+        if (database.isregister(clientid) & database.getUsernames().containsKey(loginMessage.getUsername())) {
             if (!database.isLogedin(loginMessage.getUsername(), clientid)) {
                 if (database.getClientsIds().get(clientid).getPassword().equals(loginMessage.getPassword())) {
                     if (loginMessage.getCaptcha() == 1) {
                         database.getClientsIds().get(clientid).setIslogedin(true);
                         AckMessage ackMessage = new AckMessage((short) 10, (short) 2, null, (short) 0, (short) 0, (short) 0, (short) 0);
                         connections.send(clientid, ackMessage);
+                        LinkedList<Messages> messagesToSend = database.getClientsIds().get(clientid).getMessages();
+                        if(messagesToSend != null) {
+                            while (!messagesToSend.isEmpty()) {
+                                connections.send(clientid,messagesToSend.removeFirst());
+                            }
+                        }
                     } else {
                         connections.send(clientid, new ErrorMessage((short) 11, (short) 2));
                     }
@@ -143,7 +149,6 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
         if (database.isregister(clientid)) {
             if (database.isLogedin(null, clientid)) {
                 database.getClientsIds().get(clientid).setIslogedin(false);
-                database.getClientsIds().get(clientid).setIsregistered(false);
                 AckMessage ackMessage = new AckMessage((short) 10, (short) 3, null, (short) 0, (short) 0, (short) 0, (short) 0);
                 connections.send(clientid, ackMessage);
                 terminate();
@@ -229,7 +234,13 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
                     content = content.replaceAll(it.next(), "<filtered>");
                 }
                 NotificationMessage notificationMessage = new NotificationMessage((short) 9, (short) 0, database.getClientsIds().get(clientid).getUsername(), content);
-                connections.send(database.getUsernames().get(pmMessage.getUsername()).getClientId(), notificationMessage);
+                if(database.getUsernames().get(pmMessage.getUsername()).islogedin) {
+                    connections.send(database.getUsernames().get(pmMessage.getUsername()).getClientId(), notificationMessage);
+                }
+                else {
+                    database.getUsernames().get(pmMessage.getUsername()).addMessageTobeSent(notificationMessage);
+                }
+
             }
             AckMessage ackMessage = new AckMessage((short) 10, (short) 6, null, (short) 0, (short) 0, (short) 0, (short) 0);
             connections.send(clientid, ackMessage);
