@@ -1,5 +1,6 @@
 package bgu.spl.net.impl.Assin;
 
+import bgu.spl.net.api.bidi.ConnectionHandler;
 import bgu.spl.net.impl.Assin.Messages.RegisterMessage;
 
 import java.util.LinkedList;
@@ -8,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Database {
     private Map<Integer, ClientDetails> ClientsIds;
-    private Map <ClientDetails,connectionHandler> ClientsHandlers;
+    private Map <ClientDetails, ConnectionHandler> ClientsHandlers;
     private Map <String,ClientDetails> usernames;
     private LinkedList<String> FilterdWords;
 
@@ -32,7 +33,7 @@ public class Database {
         return ClientsIds;
     }
 
-    public Map<ClientDetails, connectionHandler> getClientsHandlers() {
+    public Map<ClientDetails, ConnectionHandler> getClientsHandlers() {
         return ClientsHandlers;
     }
 

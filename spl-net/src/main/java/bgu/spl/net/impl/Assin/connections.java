@@ -2,6 +2,8 @@ package bgu.spl.net.impl.Assin;
 
 import bgu.spl.net.api.bidi.Connections;
 
+import java.io.IOException;
+
 
 public class connections<T> implements Connections<T> {
 
@@ -36,6 +38,11 @@ public class connections<T> implements Connections<T> {
     @Override
     public void disconnect(int connectionId) {
         database.getClientsIds().get(connectionId).setIslogedin(false);
+        try {
+            database.getClientsHandlers().get(database.getClientsIds().get(connectionId)).close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

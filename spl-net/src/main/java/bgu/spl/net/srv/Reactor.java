@@ -2,6 +2,10 @@ package bgu.spl.net.srv;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
 import bgu.spl.net.api.MessagingProtocol;
+import bgu.spl.net.api.bidi.BidiMessagingProtocol;
+import bgu.spl.net.api.bidi.Connections;
+import bgu.spl.net.impl.Assin.*;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ClosedSelectorException;
@@ -15,10 +19,11 @@ import java.util.function.Supplier;
 public class Reactor<T> implements Server<T> {
 
     private final int port;
-    private final Supplier<MessagingProtocol<T>> protocolFactory;
+    private final Supplier<BidiMessagingProtocol<T>> protocolFactory;
     private final Supplier<MessageEncoderDecoder<T>> readerFactory;
     private final ActorThreadPool pool;
     private Selector selector;
+    private int clientid;
 
     private Thread selectorThread;
     private final ConcurrentLinkedQueue<Runnable> selectorTasks = new ConcurrentLinkedQueue<>();
@@ -26,13 +31,14 @@ public class Reactor<T> implements Server<T> {
     public Reactor(
             int numThreads,
             int port,
-            Supplier<MessagingProtocol<T>> protocolFactory,
+            Supplier<BidiMessagingProtocol<T>> protocolFactory,
             Supplier<MessageEncoderDecoder<T>> readerFactory) {
 
         this.pool = new ActorThreadPool(numThreads);
         this.port = port;
         this.protocolFactory = protocolFactory;
         this.readerFactory = readerFactory;
+        clientid = 0;
     }
 
     @Override
@@ -52,6 +58,9 @@ public class Reactor<T> implements Server<T> {
 
                 selector.select();
                 runSelectionThreadTasks();
+
+
+
 
                 for (SelectionKey key : selector.selectedKeys()) {
 
@@ -95,17 +104,24 @@ public class Reactor<T> implements Server<T> {
     private void handleAccept(ServerSocketChannel serverChan, Selector selector) throws IOException {
         SocketChannel clientChan = serverChan.accept();
         clientChan.configureBlocking(false);
-        final NonBlockingConnectionHandler<T> handler = new NonBlockingConnectionHandler<>(
+        Database database= Database.getInstance();
+        Connections<T> connection = connections.getInstance(database);
+        ClientDetails clientDetails = new ClientDetails(clientid);
+        database.getClientsIds().put(clientid,clientDetails);
+
+        final AssconnectionHandler<T> handler = new AssconnectionHandler<>(
                 readerFactory.get(),
                 protocolFactory.get(),
                 clientChan,
-                this);
+                this,connection,clientid);
+        database.getClientsHandlers().put(clientDetails,handler);
         clientChan.register(selector, SelectionKey.OP_READ, handler);
+        clientid++;
     }
 
     private void handleReadWrite(SelectionKey key) {
         @SuppressWarnings("unchecked")
-        NonBlockingConnectionHandler<T> handler = (NonBlockingConnectionHandler<T>) key.attachment();
+        AssconnectionHandler<T> handler = (AssconnectionHandler<T>) key.attachment();
 
         if (key.isReadable()) {
             Runnable task = handler.continueRead();

@@ -21,6 +21,7 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
         clientid = connectionId;
         this.connections = connections;
         database = Database.getInstance();
+        shouldterminate = false;
     }
 
 
@@ -73,6 +74,10 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
     @Override
     public boolean shouldTerminate() {
         return shouldterminate;
+    }
+
+    public void terminate() {
+        shouldterminate = true;
     }
 
 
@@ -141,6 +146,7 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
                 database.getClientsIds().get(clientid).setIsregistered(false);
                 AckMessage ackMessage = new AckMessage((short) 10, (short) 3, null, (short) 0, (short) 0, (short) 0, (short) 0);
                 connections.send(clientid, ackMessage);
+                terminate();
             } else
                 connections.send(clientid, new ErrorMessage((short) 11, (short) 3));
         } else
@@ -169,6 +175,7 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
                 } else {
                     if (database.getClientsIds().get(clientid).getFollowing().contains(followMessage.getUsername())) {
                         database.getClientsIds().get(clientid).getFollowing().remove(followMessage.getUsername());
+                        database.getUsernames().get(followMessage.getUsername()).getFollowers().remove(database.getClientsIds().get(clientid).getUsername());
                         AckMessage ackMessage = new AckMessage((short) 10, (short) 4, followMessage.getUsername(), (short) 1, (short) 0, (short) 0, (short) 0);
                         connections.send(clientid, ackMessage);
                     } else
@@ -183,7 +190,8 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
     public void post(PostMessage message, int clientid) {
         if (database.isregister(clientid)) {
             if (database.isLogedin(null, clientid)) {
-                LinkedList<String> followers = database.getClientsIds().get(clientid).getFollowers();
+                LinkedList<String> followers;
+                followers = (LinkedList<String>) database.getClientsIds().get(clientid).getFollowers().clone();
                 database.getClientsIds().get(clientid).addPost();
                 while (!followers.isEmpty()) {
                     NotificationMessage notificationMessage = new NotificationMessage((short) 9, (short) 1, database.getClientsIds().get(clientid).getUsername(), message.getContent());
@@ -211,12 +219,11 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
     public void PM(PMMessage pmMessage, int clientid) {
         if (!database.isregister(clientid) | !database.isLogedin(null, clientid) |
                 !database.getUsernames().containsKey(pmMessage.getUsername()) ||
-                !database.isregister(database.getUsernames().get(pmMessage.getUsername()).getClientId()) |
-                !database.getClientsIds().get(clientid).getFollowing().contains(pmMessage.getUsername())) {
+                !database.isregister(database.getUsernames().get(pmMessage.getUsername()).getClientId()) ) {
             connections.send(clientid, new ErrorMessage((short) 11, (short) 6));
         } else {
             if (database.getUsernames().containsKey(pmMessage.getUsername()) && !database.getUsernames().get(pmMessage.getUsername()).getBlockedUsers().contains(database.getClientsIds().get(clientid).getUsername())) {
-                String content = pmMessage.getContent();
+                String content = pmMessage.getContent() + " " +pmMessage.getSendingDate_Time();
                 Iterator<String> it = database.getFilterdWords().iterator();
                 while (it.hasNext()) {
                     content = content.replaceAll(it.next(), "<filtered>");

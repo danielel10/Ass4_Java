@@ -73,7 +73,7 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
                     String content = msg.removeFirst();
                     LinkedList<String> users = new LinkedList<>();
 
-                    while (!msg.getFirst().equals("0")) {
+                    while (!msg.isEmpty() && !msg.getFirst().equals("0")) {
                         String str = msg.removeFirst();
                         System.out.println(str);
                         if (str.charAt(0) == '@') {
@@ -125,7 +125,7 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
         short opcode = message.getOpcode();
         switch (opcode) {
             case 9: {
-                byte[] opbyte = new byte[1 << 10];
+                byte[] opbyte = new byte[2];
                 opbyte[0] = (byte)((opcode >> 8) & 0xFF);
                 opbyte[1] = (byte)(opcode & 0xFF);
                 byte[] content = NotificationMsg((NotificationMessage) message); //uses utf8 by default
