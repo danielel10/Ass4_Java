@@ -42,7 +42,14 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
                 case 2: {
                     String username = msg.removeFirst();
                     String password = msg.removeFirst();
-                    String captcha = msg.removeFirst();
+                    String captcha;
+                    if (msg.isEmpty()) {
+                        captcha = "0";
+                    }
+                    else
+                    {
+                        captcha = msg.removeFirst();
+                    }
                     byte[] test = captcha.getBytes();
                     short captchas;
                     if (test[0] == 49) {

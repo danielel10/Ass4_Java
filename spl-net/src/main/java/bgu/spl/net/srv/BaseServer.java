@@ -36,7 +36,7 @@ public abstract class BaseServer<T> implements Server<T> {
     public void serve() {
 
         try (ServerSocket serverSock = new ServerSocket(port)) {
-			System.out.println("Server started");
+            System.out.println("Server started");
 
             this.sock = serverSock; //just to be able to close
             int clientid = 0;
@@ -58,7 +58,7 @@ public abstract class BaseServer<T> implements Server<T> {
         } catch (IOException ex) {
         }
 
-        System.out.println("server closed!!!");
+//        System.out.println("server closed!!!");
     }
 
     @Override
