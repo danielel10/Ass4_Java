@@ -77,17 +77,18 @@ public class EncDec implements MessageEncoderDecoder<Messages> {
                     return new FollowMessage(opcode, followUnfollows, username);
                 }
                 case 5: {
-                    String content = msg.removeFirst();
+                    String content = "";
                     LinkedList<String> users = new LinkedList<>();
 
                     while (!msg.isEmpty() && !msg.getFirst().equals("0")) {
                         String str = msg.removeFirst();
-                        System.out.println(str);
+
                         if (str.charAt(0) == '@') {
                             users.add(str.substring(1));
                         }
                         content = content + " " + str;
                     }
+                    content = content.substring(1);
                     msg.clear();
                     return new PostMessage(opcode, content, users);
                 }

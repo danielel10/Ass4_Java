@@ -162,7 +162,7 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
             if (database.isLogedin(null, clientid)) {
                 //follow case
                 if (followMessage.getFollow() == 0) {
-                    if (database.getClientsIds().get(clientid).getFollowing().contains(followMessage.getUsername()) |
+                    if (!database.getUsernames().containsKey(followMessage.getUsername()) || database.getClientsIds().get(clientid).getFollowing().contains(followMessage.getUsername()) |
                             database.getClientsIds().get(clientid).getBlockedUsers().contains(followMessage.getUsername()))
                         connections.send(clientid, new ErrorMessage((short) 11, (short) 4));
                     else {
