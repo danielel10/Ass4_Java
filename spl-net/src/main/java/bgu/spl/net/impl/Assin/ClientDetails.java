@@ -145,4 +145,8 @@ public class ClientDetails {
         LocalDate localDate = LocalDate.now();
         age = Period.between(birth,localDate).getYears();
     }
+
+    public void setNumOfPosts(int numOfPosts) {
+        this.numOfPosts = numOfPosts;
+    }
 }

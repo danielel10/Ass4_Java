@@ -117,6 +117,7 @@ public class Bidiprotocol implements BidiMessagingProtocol<Messages> {
                         newclientDetails.setFollowers(oldclient.getFollowers());
                         newclientDetails.setFollowing(oldclient.getFollowing());
                         newclientDetails.setMessages(oldclient.getMessages());
+                        newclientDetails.setNumOfPosts(oldclient.getNumOfPosts());
                         database.getUsernames().remove(loginMessage.getUsername());
                         database.getUsernames().put(loginMessage.getUsername(), newclientDetails);
                         database.getClientsIds().get(clientid).setIslogedin(true);
